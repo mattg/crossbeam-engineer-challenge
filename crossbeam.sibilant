@@ -1,0 +1,97 @@
+(def determine-order (tasks chosen-tasks)
+  (def add-tasks (chosen-tasks dependencies sorted-tasks)
+    (default sorted-tasks [])
+    (each chosen-task chosen-tasks
+      (if (excludes? sorted-tasks chosen-task)
+        (assign sorted-tasks (append
+          (add-tasks (get dependencies[chosen-task]) dependencies sorted-tasks)
+          chosen-task
+        ))
+      )
+    )
+    sorted-tasks
+  )
+
+  (var dependencies {})
+  (each task tasks (set dependencies[task.task] task.depends))
+  (add-tasks chosen-tasks dependencies)
+)
+
+
+
+;; ORIGINAL EXAMPLES
+
+(var example-tasks
+  [{task "make a sandwich", depends ["buy groceries"]}
+   {task "buy groceries", depends ["go to the store"]}
+   {task "go to the store", depends []}])
+
+;; [ 'go to the store', 'buy groceries', 'make a sandwich' ]
+(console.log "1." (determine-order example-tasks ["make a sandwich"]))
+
+;; [ 'go to the store', 'buy groceries', 'make a sandwich' ]
+(console.log "2." (determine-order example-tasks ["buy groceries" "make a sandwich"]))
+
+
+
+;; ADDITIONAL EXAMPLES
+
+(var example-tasks-2
+  [
+    {task "make a PB&J", depends ["put peanut butter on bread", "put jelly on bread"]}
+    {task "put peanut butter on bread", depends ["make peanut butter", "make bread", "get a knife"]}
+    {task "put jelly on bread", depends ["make jelly", "make bread", "get a knife"]}
+    {task "make peanut butter", depends ["dig up some peanuts"]}
+    {task "make jelly", depends ["pick some grapes"]}
+    {task "make bread", depends ["harvest some wheat"]}
+    {task "dig up some peanuts", depends []}
+    {task "pick some grapes", depends []}
+    {task "harvest some wheat", depends []}
+    {task "get a knife", depends []}
+  ]
+)
+
+;; 3. Single task with no dependencies.
+;;  [ 'get a knife' ]
+(console.log "3." (determine-order example-tasks-2 ["get a knife"]))
+
+;; 4. Three tasks with no shared dependencies
+;;  [
+;;    'pick some grapes',
+;;    'make jelly',
+;;    'dig up some peanuts',
+;;    'make peanut butter',
+;;    'get a knife'
+;;  ]
+(console.log "4." (determine-order example-tasks-2 ["make jelly", "make peanut butter", "get a knife"]))
+
+;; 5. Final task that depends on all other tasks. Some overlapping dependencies. Four starting points.
+;;  [
+;;    'dig up some peanuts',
+;;    'make peanut butter',
+;;    'harvest some wheat',
+;;    'make bread',
+;;    'get a knife',
+;;    'put peanut butter on bread',
+;;    'pick some grapes',
+;;    'make jelly',
+;;    'put jelly on bread',
+;;    'make a PB&J'
+;;  ]
+(console.log "5." (determine-order example-tasks-2 ["make a PB&J"]))
+
+;; 6. Dependency of final task, then final task. Output contains same tasks as previous example, but in different order.
+;;  [
+;;    'pick some grapes',
+;;    'make jelly',
+;;    'dig up some peanuts',
+;;    'make peanut butter',
+;;    'harvest some wheat',
+;;    'make bread',
+;;    'get a knife',
+;;    'put peanut butter on bread',
+;;    'put jelly on bread',
+;;    'make a PB&J'
+;;  ]
+(console.log "6." (determine-order example-tasks-2 ["make jelly", "make a PB&J"]))
+
